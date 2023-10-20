@@ -123,8 +123,8 @@ pub mod response;
 mod signer;
 
 pub use crate::request::notification::{
-    CollapseId, DefaultNotificationBuilder, NotificationBuilder, NotificationOptions, Priority, WebNotificationBuilder,
-    WebPushAlert,
+    CollapseId, DefaultNotificationBuilder, NotificationBuilder, NotificationOptions, Priority, PushType,
+    WebNotificationBuilder, WebPushAlert,
 };
 
 pub use crate::response::{ErrorBody, ErrorReason, Response};

@@ -4,7 +4,7 @@ mod options;
 mod web;
 
 pub use self::default::{DefaultAlert, DefaultNotificationBuilder, DefaultSound};
-pub use self::options::{CollapseId, NotificationOptions, Priority};
+pub use self::options::{CollapseId, NotificationOptions, Priority, PushType};
 pub use self::web::{WebNotificationBuilder, WebPushAlert};
 
 use crate::request::payload::Payload;

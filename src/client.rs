@@ -155,6 +155,9 @@ impl Client {
         if let Some(apns_id) = options.apns_id {
             builder = builder.header("apns-id", apns_id.as_bytes());
         }
+        if let Some(apns_push_type) = options.apns_push_type.as_ref() {
+            builder = builder.header("apns-push-type", apns_push_type.to_string().as_bytes());
+        }
         if let Some(ref apns_expiration) = options.apns_expiration {
             builder = builder.header("apns-expiration", apns_expiration.to_string().as_bytes());
         }
@@ -187,6 +190,7 @@ mod tests {
     use crate::request::notification::NotificationBuilder;
     use crate::request::notification::{CollapseId, NotificationOptions, Priority};
     use crate::signer::Signer;
+    use crate::PushType;
     use http::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE};
     use hyper::Method;
     use hyper_alpn::AlpnConnector;
@@ -277,6 +281,21 @@ jDwmlD1Gg0yJt1e38djFwsxsfr5q2hv0Rj9fTEqAPr8H7mGm0wKxZ7iQ
         let request = client.build_request(payload);
 
         assert_ne!(None, request.headers().get(AUTHORIZATION));
+    }
+
+    #[test]
+    fn test_request_with_background_type() {
+        let builder = DefaultNotificationBuilder::new();
+        let options = NotificationOptions {
+            apns_push_type: Some(PushType::Background),
+            ..Default::default()
+        };
+        let payload = builder.build("a_test_id", options);
+        let client = Client::new(AlpnConnector::new(), None, Endpoint::Production);
+        let request = client.build_request(payload);
+        let apns_push_type = request.headers().get("apns-push-type").unwrap();
+
+        assert_eq!("background", apns_push_type);
     }
 
     #[test]
