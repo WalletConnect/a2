@@ -1,5 +1,4 @@
 use crate::error::Error;
-use base64::encode;
 use std::io::Read;
 use std::sync::Arc;
 use std::{
@@ -7,6 +6,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use base64::prelude::*;
 #[cfg(feature = "openssl")]
 use openssl::{
     ec::EcKey,
@@ -75,8 +75,8 @@ impl Secret {
     fn new_ring(pem_key: &[u8]) -> Result<Self, Error> {
         let der = pem::parse(pem_key).map_err(SignerError::Pem)?;
         let alg = &signature::ECDSA_P256_SHA256_FIXED_SIGNING;
-        let signing_key = signature::EcdsaKeyPair::from_pkcs8(alg, &der.contents)?;
         let rng = rand::SystemRandom::new();
+        let signing_key = signature::EcdsaKeyPair::from_pkcs8(alg, der.contents(), &rng)?;
         Ok(Self::Ring { signing_key, rng })
     }
 
@@ -164,13 +164,17 @@ impl Signer {
             iat: issued_at,
         };
 
-        let encoded_header = encode(serde_json::to_string(&headers)?);
-        let encoded_payload = encode(serde_json::to_string(&payload)?);
+        let encoded_header = BASE64_STANDARD.encode(serde_json::to_string(&headers)?);
+        let encoded_payload = BASE64_STANDARD.encode(serde_json::to_string(&payload)?);
         let signing_input = format!("{}.{}", encoded_header, encoded_payload);
 
         let signature_payload = secret.sign(&signing_input)?;
 
-        Ok(format!("{}.{}", signing_input, encode(signature_payload)))
+        Ok(format!(
+            "{}.{}",
+            signing_input,
+            BASE64_STANDARD.encode(signature_payload)
+        ))
     }
 
     fn renew(&self) -> Result<(), Error> {
